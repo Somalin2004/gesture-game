@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Gesture Shape Matcher</title>
+  <style>
+    :root {
+      --bg-gradient-light: linear-gradient(135deg, #e0eafc, #cfdef3);
+      --bg-gradient-dark: linear-gradient(135deg, #1e1e2f, #2d2d3a);
+      --text-light: #000;
+      --text-dark: #fff;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      height: 100%;
+      background: var(--bg-gradient-dark);
+      color: var(--text-dark);
+      transition: background 0.5s ease, color 0.5s ease;
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding-top: 20px;
+    }
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 20px;
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+    }
+    .video-container {
+      position: relative;
+      width: 800px;
+      max-width: 90vw;
+      aspect-ratio: 4 / 3;
+    }
+    video.input_video,
+    canvas.output_canvas {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+    }
+    canvas.output_canvas {
+      z-index: 10;
+    }
+    .theme-toggle {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.2);
+      color: #fff;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .theme-toggle:hover {
+      background: rgba(255, 255, 255, 0.4);
+    }
+    #timer {
+      font-size: 2rem;
+      margin: 10px;
+      padding: 8px 16px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+    }
+    html[data-theme='light'] body {
+      background: var(--bg-gradient-light);
+      color: var(--text-light);
+    }
+    html[data-theme='light'] .theme-toggle {
+      color: #000;
+    }
+  </style>
+</head>
+<body>
+  <button class="theme-toggle" onclick="toggleTheme()">Toggle Theme</button>
+  <h1>✋ Gesture Shape Matcher</h1>
+  <div id="timer">Time left: 60s</div>
+  <div class="video-container">
+    <video class="input_video" autoplay></video>
+    <canvas class="output_canvas" width="800" height="600"></canvas>
+  </div>
+
+  <!-- Sound files -->
+  <audio id="successSound" src="success.mp3"></audio>
+  <audio id="failSound" src="failure.mp3"></audio>
+
+  <!-- MediaPipe -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+
+  <script>
+    function toggleTheme() {
+      const html = document.documentElement;
+      const current = html.getAttribute('data-theme');
+      html.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
+    }
+
+    let timeLeft = 60;
+    const timerDiv = document.getElementById("timer");
+    const successSound = document.getElementById("successSound");
+    const failSound = document.getElementById("failSound");
+    let timerInterval;
+    let resultGiven = false;
+
+    function startGestureTimer() {
+      timerDiv.textContent = `Time left: ${timeLeft}s`;
+
+      timerInterval = setInterval(() => {
+        if (resultGiven) {
+          clearInterval(timerInterval);
+          return;
+        }
+        timeLeft--;
+        if (timeLeft > 0) {
+          timerDiv.textContent = `Time left: ${timeLeft}s`;
+        } else {
+          clearInterval(timerInterval);
+          checkGestureMatch("fail");
+        }
+      }, 1000);
+    }
+
+    function checkGestureMatch(result) {
+      if (resultGiven) return;
+      resultGiven = true;
+      clearInterval(timerInterval);
+
+      if (result === "success") {
+        successSound.play();
+        timerDiv.textContent = "✅ Match Successful!";
+      } else {
+        failSound.play();
+        timerDiv.textContent = "❌ Match Failed!";
+      }
+    }
+
+    // Start timer when page loads
+    startGestureTimer();
+
+    // Make resultGiven accessible in app.js
+    window.checkGestureMatch = checkGestureMatch;
+    window.resultGiven = resultGiven;
+  </script>
+
+  <!-- App Logic -->
+  <script src="app.js"></script>
+</body>
+</html>
